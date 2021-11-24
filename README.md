@@ -1,4 +1,4 @@
-# -1
+# -
 
 This is a fun project to help me better understand load balancers/proxies. The aim is to implement an
 application similar to HAProxy/Envoy.

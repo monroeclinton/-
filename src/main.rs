@@ -53,7 +53,7 @@ async fn main() {
 
     }
 
-    match Server::new(config).await {
+    match Server::new(config) {
         Ok(server) => server.run(router).await.unwrap(),
         Err(e) => {
             println!("Error starting server: {}", e);

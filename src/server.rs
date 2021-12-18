@@ -21,8 +21,7 @@ pub struct Server {
 }
 
 impl Server {
-    pub async fn new(config: config::Config) -> Result<Self> {
-
+    pub fn new(config: config::Config) -> Result<Self> {
         let mut listeners = Vec::new();
 
         // Perhaps should run multiple listeners

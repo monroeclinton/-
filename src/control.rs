@@ -5,8 +5,8 @@ use tokio_seqpacket::{UnixSeqpacketListener, UnixSeqpacket};
 use tokio_seqpacket::ancillary::{AncillaryData, SocketAncillary};
 use serde::{Serialize, Deserialize};
 use std::fs;
-use std::os::unix::io::{RawFd};
-use std::io::{IoSliceMut};
+use std::os::unix::io::RawFd;
+use std::io::IoSliceMut;
 use std::path::PathBuf;
 
 // https://man7.org/linux/man-pages/man7/unix.7.html (SCM_RIGHTS)

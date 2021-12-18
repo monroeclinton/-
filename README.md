@@ -18,6 +18,8 @@ ports = [
     8082,
 ]
 
+debug = false
+
 [[apps]]
 uuid = "test-app"
 # This will be used as the anycast address

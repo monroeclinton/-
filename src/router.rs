@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use tokio::net::{TcpStream};
+use tokio::net::TcpStream;
 use tokio::io::{self, AsyncWriteExt};
 use tokio::sync::oneshot;
 use thiserror::Error;

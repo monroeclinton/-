@@ -7,6 +7,8 @@ pub struct Config {
     pub control_socket_path: String,
     pub ip_addr: String,
     pub ports: Vec<u16>,
+    #[serde(default = "default_debug")]
+    pub debug: bool,
     pub apps: Vec<App>,
 }
 
@@ -29,3 +31,6 @@ pub fn get_config() -> Result<Config, Error> {
 
     Ok(config)
 }
+
+// Defaults
+fn default_debug() -> bool { false }

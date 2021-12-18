@@ -6,6 +6,7 @@ edition = "2018"
 [dependencies]
 anyhow = "1.0.45"
 futures = "0.3.17"
+libbpf-rs = "0.15.0"
 serde = { version = "1.0.130", features = ["derive"] }
 socket2 = { version = "0.4.2", features = ["all"] }
 thiserror = "1.0.30"
@@ -14,3 +15,6 @@ tokio = { version = "1.13.0", default-features = false, features = [
 ] }
 tokio-seqpacket = "0.5.4"
 toml = "0.5.8"
+
+[build-dependencies]
+libbpf-cargo = "0.9.4"

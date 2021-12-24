@@ -5,6 +5,8 @@ use thiserror::Error;
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
 
+use crate::config::Config;
+
 #[derive(Error, Debug)]
 pub enum RouterError {
     #[error("Unable to connect to target server.")]
@@ -16,34 +18,43 @@ pub struct Router {
 }
 
 impl Router {
-    pub fn new() -> Self {
-        Self {
-            apps: HashMap::new(),
-        }
-    }
+    pub fn new(config: Config) -> Self {
+        let mut apps = HashMap::new();
 
-    pub fn add_app(&mut self, app: App) {
-        self.apps.insert(app.ip_addr, app);
-    }
+        for app_config in config.apps {
+            let app_ip_addr = match app_config.ip_addr.parse() {
+                Ok(ip) => ip,
+                Err(e) => {
+                    panic!("Unable to parse app IP. Err: {}", e);
+                }
+            };
 
-    pub fn add_target(&mut self, ip_addr: IpAddr, target: AppTarget) {
-        if let Some(app) = self.apps.get_mut(&ip_addr) {
-            app.targets.push(target);
-        }
-    }
+            let mut app = App::new(app_ip_addr);
 
-    pub fn set_weight(&mut self, app_ip_addr: IpAddr, target_ip_addr: IpAddr, weight: u8) {
-        if let Some(app) = self.apps.get_mut(&app_ip_addr) {
-            if let Some(target) = app.targets.iter_mut().find(|x| x.ip_addr == target_ip_addr) {
-                target.weight = weight;
+            for target_config in app_config.targets {
+                let target_ip_addr = match target_config.ip_addr.parse() {
+                    Ok(ip) => ip,
+                    Err(e) => {
+                        panic!("Unable to parse target IP. Err: {}", e);
+                    }
+                };
+                
+                app.targets.push(
+                    AppTarget::new(target_ip_addr, target_config.weight)
+                );
             }
+
+            apps.insert(app_ip_addr, App::new(app_ip_addr));
+        }
+
+        Self {
+            apps,
         }
     }
 
     pub fn balancer(&self) -> Balancer {
         Balancer::new(self.apps.clone())
     }
-
 }
 
 pub struct Balancer {
@@ -124,10 +135,10 @@ pub struct AppTarget {
 }
 
 impl AppTarget {
-    pub fn new(ip_addr: IpAddr) -> Self {
+    pub fn new(ip_addr: IpAddr, weight: u8) -> Self {
         Self {
             ip_addr,
-            weight: 0,
+            weight,
         }
     }
 }

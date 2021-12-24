@@ -3,8 +3,8 @@ mod router;
 mod config;
 mod server;
 
-use crate::router::{Router, App, AppTarget};
 use crate::config::get_config;
+use crate::router::Router;
 use crate::server::Server;
 
 #[tokio::main]
@@ -14,43 +14,7 @@ async fn main() {
         Err(e) => panic!("Unable to read config file, check config.toml. Err: {:?}", e)
     };
 
-    let mut router = Router::new();
-
-    for app_config in config.apps.clone() {
-        let app_ip_addr = match app_config.ip_addr.parse() {
-            Ok(ip) => ip,
-            Err(e) => {
-                println!("Unable to parse app IP. Err: {}", e);
-                continue;
-            }
-        };
-
-        router.add_app(
-            App::new(app_ip_addr)
-        );
-
-        for target_config in app_config.targets {
-            let target_ip_addr = match target_config.ip_addr.parse() {
-                Ok(ip) => ip,
-                Err(e) => {
-                    println!("Unable to parse target IP. Err: {}", e);
-                    continue;
-                }
-            };
-
-            router.add_target(
-                app_ip_addr,
-                AppTarget::new(target_ip_addr)
-            );
-
-            router.set_weight(
-                app_ip_addr,
-                target_ip_addr,
-                target_config.weight
-            );
-        }
-
-    }
+    let router = Router::new(config.clone());
 
     match Server::new(config) {
         Ok(server) => server.run(router).await.unwrap(),

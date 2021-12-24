@@ -7,9 +7,6 @@ application similar to HAProxy/Envoy.
 
 Example config:
 ```
-# If this changes between restarts, we are unable to take over active connections
-control_socket_path = "...control.sock"
-
 ip_addr = "127.0.0.1"
 
 ports = [

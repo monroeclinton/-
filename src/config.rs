@@ -4,7 +4,6 @@ use std::io::Error;
 
 #[derive(Clone, Deserialize)]
 pub struct Config {
-    pub control_socket_path: String,
     pub ip_addr: String,
     pub ports: Vec<u16>,
     #[serde(default = "default_debug")]

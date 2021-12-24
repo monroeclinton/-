@@ -1,7 +1,6 @@
 mod bpf;
 mod router;
 mod config;
-mod control;
 mod server;
 
 use crate::router::{Router, App, AppTarget};

@@ -1,22 +1,16 @@
 use anyhow::Result;
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::oneshot;
-use tokio_seqpacket::ancillary::{SocketAncillary};
+use tokio::net::TcpListener;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
-use std::os::unix::io::{AsRawFd, FromRawFd, RawFd};
-use std::io::IoSlice;
-use std::fs;
+use std::sync::Arc;
+use std::os::unix::io::AsRawFd;
 
 use crate::router::Router;
 use crate::config;
-use crate::control::{ControlListener, ControlStream, SCM_MAX_FD, SEND_FS};
 use crate::bpf::loader::load_socket_redirector;
 
 
 pub struct Server {
     listeners: Vec<TcpListener>,
-    control_socket_path: String,
     _redirector_link: libbpf_rs::Link,
 }
 
@@ -45,15 +39,12 @@ impl Server {
 
         let listener = TcpListener::from_std(socket.into())?;
 
-        let _redirector_link = load_socket_redirector(config.clone(), listener.as_raw_fd())?;
+        let _redirector_link = load_socket_redirector(config, listener.as_raw_fd())?;
 
         listeners.push(listener);
 
-        let control_socket_path = config.control_socket_path;
-
         Ok(Self {
             listeners,
-            control_socket_path,
             _redirector_link,
         })
     }

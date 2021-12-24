@@ -1,12 +1,9 @@
 use anyhow::{anyhow, Result};
 use tokio::net::TcpStream;
 use tokio::io::{self, AsyncWriteExt};
-use tokio::sync::oneshot;
 use thiserror::Error;
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
-use std::sync::{Arc, Mutex};
-use std::os::unix::io::{AsRawFd, RawFd};
 
 #[derive(Error, Debug)]
 pub enum RouterError {
@@ -63,8 +60,6 @@ impl Balancer {
     pub async fn handle_stream(
         &self,
         inbound: TcpStream,
-        cancelled: oneshot::Receiver<()>,
-        fds: Arc<Mutex<Vec<RawFd>>>
     ) -> Result<()> {
         let ip_addr = inbound.local_addr()?.ip();
 
@@ -73,7 +68,7 @@ impl Balancer {
             None => return Err(anyhow!("Unable to find app with ip: {}", ip_addr)),
         };
 
-        if app.targets.len() == 0 {
+        if app.targets.is_empty() {
             return Err(anyhow!("No targets for app with ip: {}", app.ip_addr));
         }
 
@@ -87,22 +82,19 @@ impl Balancer {
         let mut targets = app.targets.clone();
         targets.sort_by(|x, y| y.weight.cmp(&x.weight));
         for target in targets {
-            let target_ip_addr = target.ip_addr.clone();
+            let target_ip_addr = target.ip_addr;
 
             let socket_addr = SocketAddr::new(target_ip_addr, local_port);
 
-            match TcpStream::connect(socket_addr).await {
-                Ok(outbound) => {
-                    match proxy_stream(inbound, outbound, cancelled, fds).await {
-                        Ok(_) => (), 
-                        Err(e) => {
-                            println!("Error proxying stream: {:?}", e);
-                        }
+            if let Ok(outbound) = TcpStream::connect(socket_addr).await {
+                match proxy_stream(inbound, outbound).await {
+                    Ok(_) => (), 
+                    Err(e) => {
+                        println!("Error proxying stream: {:?}", e);
                     }
+                }
 
-                    return Ok(());
-                },
-                _ => (),
+                return Ok(());
             };
         }
 
@@ -143,12 +135,7 @@ impl AppTarget {
 async fn proxy_stream(
     mut inbound: TcpStream,
     mut outbound: TcpStream,
-    cancelled: oneshot::Receiver<()>,
-    fds: Arc<Mutex<Vec<RawFd>>>
 ) -> Result<()> {
-    let fd = inbound.as_raw_fd();
-    fds.lock().unwrap().push(fd);
-
     let (mut ro, mut wo) = outbound.split();
     let (mut ri, mut wi) = inbound.split();
 
@@ -167,25 +154,12 @@ async fn proxy_stream(
     };
 
 
-    let join = async {
-        match tokio::try_join!(client_to_server, server_to_client) {
-            Ok(_) => {
-                return Ok(());
-            }
-            Err(e) => {
-                return Err(anyhow!("Something went wrong proxying stream. Error: {:?}", e));
-            }
+    match tokio::try_join!(client_to_server, server_to_client) {
+        Ok(_) => {
+            Ok(())
         }
-    };
-
-    tokio::select! {
-        _ = join => {
-            fds.lock().unwrap().retain(|x| x != &fd);
-            println!("Finished copying stream.");
+        Err(e) => {
+            Err(anyhow!("Something went wrong proxying stream. Error: {:?}", e))
         }
-        _ = async { cancelled.await } => {
-        }
-    };
-    
-    Ok(())
+    }
 }

@@ -1,7 +1,14 @@
 # -
 
-This is a fun project to help me better understand load balancers/proxies. The aim is to implement an
-application similar to HAProxy/Envoy.
+This is a fun project to help me better understand load balancers/proxies.
+The intention is to create an edge load balancer similar to Cloudflare's Unimog.
+
+![](./docs/overview.png)
+
+## Constraints
+- Management through gRPC
+- Assumes either jumbo frames are enabled or lower MTU is advertised
+- Forwarding table changes should not break connections
 
 ## Setup
 

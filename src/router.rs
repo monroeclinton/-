@@ -44,7 +44,7 @@ impl Router {
                 );
             }
 
-            apps.insert(app_ip_addr, App::new(app_ip_addr));
+            apps.insert(app_ip_addr, app);
         }
 
         Self {
